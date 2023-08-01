@@ -1,0 +1,79 @@
+3080零号机 43779
+training started:VGG cifar10 Max-Common epoch=502
+start time:2023-07-13 20:24:36
+预计13日22:10结束
+ending time:2023-07-25 22:11:35
+
+3080零号机 43779
+training started:VGG cifar10 Basic-Common epoch=502
+start time:2023-07-20 08:24:33
+预计20日10:30结束
+ending time:2023-07-25 10:20:44
+
+3080零号机 43779
+training started:VGG cifar10 Basic-Common epoch=502
+start time:2023-07-21 11:56:57
+预计21日14:00结束
+ending time:2023-07-25 13:50:24
+
+3080三号机 19448
+training started:VGG CINIC10 Basic-Common epoch=502
+2023-07-21 14:13:42
+预计21日20:30结束
+ending time:2023-07-21 20:12:11
+
+3080三号机 19448
+training started:VGG CINIC-10 Basic-Common epoch=800
+2023-07-21 21:41:45
+预计22日5:00结束
+ending time:2023-07-22 04:21:39
+
+3080二号机 34518
+training started:VGG CINIC10 Clustered-Common epoch=800
+2023-07-21 21:10:13
+预计22日4:10结束
+ending time:2023-07-22 03:50:24
+
+3080一号机 36262
+training started:VGG CINIC10 Max-Common epoch=800
+2023-07-21 21:51:08
+预计22日5:00结束
+ending time:2023-07-22 04:33:19
+
+3080三号机 19448
+training started:VGG CINIC-10 Basic-Common epoch=1501
+2023-07-22 15:30:08
+预计23日 10:00结束
+ending time:2023-07-23 09:33:04
+
+3080三号机 19448
+training started:VGG CINIC-10 Basic-Common epoch=3001
+2023-07-23 11:28:16
+预计24日 23:50结束
+start time:2023-07-23 11:28:13
+ending time:2023-07-25 00:19:07
+consuming time:132653.89s
+
+3080一号机 36262
+training started:VGG Speech-Command Basic-Common epoch=501
+start time:2023-07-25 00:23:57
+预计25日4:00结束
+ending time:2023-07-25 03:46:55
+consuming time:12177.89s
+
+3080三号机 19448
+training started:VGG Speech-Command Clustered-Common epoch=501
+start time:2023-07-25 00:51:27
+预计25日4:30结束
+ending time:2023-07-25 04:18:41
+consuming time:12433.95s
+
+3080零号机 43779
+training started:VGG Speech-Command Max-Common epoch=501
+start time:2023-07-25 01:24:36
+预计25日5:10结束
+ending time:2023-07-25 04:49:35
+consuming time:12298.7s
+
+
+
