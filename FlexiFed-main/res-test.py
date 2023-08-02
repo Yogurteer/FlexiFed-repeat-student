@@ -15,6 +15,7 @@ import time
 # from utils import *
 from zzp import *
 from vgg import *
+from ResNet import *
 from torch.utils.tensorboard import SummaryWriter
 import warnings
 import os
@@ -33,7 +34,7 @@ if __name__ == '__main__':
     # models = ["VGG", "ResNet"]
     # datanames = ["CIFAR-10", "CINIC-10", "Speech-Command"]
     # datasetname1 = datanames[1]
-    dad_dir = "/root/autodl-tmp/0725zzp03rtx3080/0731-clustered-new_speech-vgg-1-epoch502"
+    dad_dir = "/root/autodl-tmp/0724zzp01rtx3080/0801-max-cifar10-resnet-1-epoch501"
     sdir = dad_dir.split('/')
     totaldata = sdir[-1].split('-')
     nepoch = [''.join(list(g)) for k, g in groupby(totaldata[5], key=lambda x: x.isdigit())]
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
     for _id in range(number_device):
         if _id < 2:
-            modelAccept[_id] = vgg11_bn()
+            modelAccept[_id] = resnet20(3,32,32,10)
 
         elif _id >= 2 and _id < 4:
             modelAccept[_id] = vgg13_bn()
@@ -141,7 +142,11 @@ if __name__ == '__main__':
             localModel = local_train(Model, train_dataset, idx_train_batch, device,lr=lr)
             modelAccept[idx] = copy.deepcopy(localModel)
         for i in range(0,8,2): # 将acc实时结果写入tensorboard，acc目录下，四个线图
-            writer.add_scalar('acc/model:{}--{}'.format(modelname,i/2+1), local_acc[i][-1], epoch)
+            writer.add_scalar(
+                'acc--{}-{}-{}/version--{}'.format(datasetname,strategyname,modelname,i/2+1), # 图名
+                local_acc[i][-1], # 纵坐标
+                epoch # 横坐标
+            )
         start = end % 2500
 
         # modelAccept = common_max(modelAccept)

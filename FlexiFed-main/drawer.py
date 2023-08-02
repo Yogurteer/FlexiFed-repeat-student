@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt  # 导入画图工具库
 """
 在下面编辑导入和导出目录,其他信息自动生成
 """
-dad_dir = "/root/autodl-tmp/0725zzp00rtx3080/0731-max-new_speech-vgg-1-epoch501"
+dad_dir = "/root/autodl-tmp/0725zzp00rtx3080/0802-basic-cifar10-resnet-1-epoch501"
 sdir = dad_dir.split('/')
 totaldata = sdir[-1].split('-')
 nepoch = [''.join(list(g)) for k, g in groupby(totaldata[-1], key=lambda x: x.isdigit())]
@@ -24,7 +24,7 @@ outputdir = "{}/{}".format(dad_dir, "figure.png")
 dataname = totaldata[2]
 strategy = totaldata[1]
 model = totaldata[3]
-xname = "epochs"
+xname = "communication rounds"
 
 with open(inputdir) as f:
     data = f.readline()

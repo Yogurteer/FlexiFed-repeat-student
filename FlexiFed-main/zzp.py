@@ -26,11 +26,11 @@ def cifar_iid(dataset, num_users):
     :param num_users:
     :return: dict of image index
     """
-    num_items = int(len(dataset) / num_users)
+    num_items = int(len(dataset) / num_users)  # num_items表示每个client分得的样本个数
     dict_users, all_idxs = {}, [i for i in range(len(dataset))]
     for i in range(num_users):
         dict_users[i] = set(np.random.choice(all_idxs, num_items,
-                                             replace=False))
+                                             replace=False))  # 从all_idxs中随机抽取num_items个元素,不可重复
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
@@ -61,7 +61,7 @@ def noniid(dataset, num_users):
     return dict_users
 
 
-def get_dataset(dataset_name: object) -> object:
+def get_dataset(dataset_name: object, number_clients) -> object:
     """
     主实验中默认使用iid划分方式，文章中写40个用户随机分配40个独立同分布的分区，种类打乱
     Sample I.I.D. client data from CIFAR10 dataset
@@ -77,33 +77,59 @@ def get_dataset(dataset_name: object) -> object:
     每次分区时,从当前的all_idxs中随机取num_items个数表示已加入的样本序号,序号不可重复
     分区加入序号之后,all_idxs列表中删除当前分区中的num_items个元素,表示分完当前区后剩下的总样本
     """
+    # if dataset_name == "cifar10":
+    #     # data_dir = '../data/cifar10'
+    #     data_dir = "/root/autodl-tmp"
+    #     print(data_dir)
+    #     train_transform = transforms.Compose([
+    #         transforms.RandomCrop(32, padding=4),
+    #         transforms.RandomHorizontalFlip(),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    #     ])
+    #
+    #     test_transform = transforms.Compose([
+    #         transforms.ToTensor(),
+    #         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    #     ])
+    #
+    #     # train_dataset = datasets.CIFAR10(data_dir, train=True, download=False, transform=train_transform)
+    #     train_dataset = datasets.CIFAR10(data_dir, train=True, download=False,
+    #                                      transform=train_transform)
+    #     test_dataset = datasets.CIFAR10(data_dir, train=False, download=False,
+    #                                     transform=test_transform)
+    #
+    #     user_groups = cifar_iid(train_dataset, number_clients)  # 用户个数20个
+    #     user_groups_test = cifar_iid(test_dataset, number_clients)
+    #
+    #     return train_dataset, test_dataset, user_groups, user_groups_test
+
     if dataset_name == "cifar10":
-        # data_dir = '../data/cifar10'
-        data_dir = os.getcwd()
-        print(data_dir)
-        train_transform = transforms.Compose([
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
+        path = "/root/autodl-tmp/CIFAR-10"
+        mean = (0.4914, 0.4822, 0.4465)
+        std = (0.2023, 0.1994, 0.2010)
+        data_transforms = {
+            'train': transforms.Compose([
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+                # normalize:the param is the mean value and standard deviation of the three channel
+            ]),
+            'test': transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+            ]),
+        }
 
-        test_transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-        ])
-
-        # train_dataset = datasets.CIFAR10(data_dir, train=True, download=False, transform=train_transform)
-        train_dataset = datasets.CIFAR10(data_dir, train=True, download=False,
-                                         transform=train_transform)
-        test_dataset = datasets.CIFAR10(data_dir, train=False, download=False,
-                                        transform=test_transform)
-
-        user_groups = cifar_iid(train_dataset, 20)  # 用户个数20个
-        user_groups_test = cifar_iid(test_dataset, 20)
+        train_dataset = datasets.CIFAR10(path + "/train", train=True, download=False,
+                                         transform=data_transforms['train'])
+        test_dataset = datasets.CIFAR10(path + "/test", train=False, download=False,
+                                        transform=data_transforms['test'])
+        user_groups = cifar_iid(train_dataset, number_clients)
+        user_groups_test = cifar_iid(test_dataset, number_clients)
 
         return train_dataset, test_dataset, user_groups, user_groups_test
-
     if dataset_name == "cinic10":
         cinic_directory = '/root/CINIC-10'
         cinic_mean = [0.47889522, 0.47227842, 0.43047404]
@@ -133,8 +159,8 @@ def get_dataset(dataset_name: object) -> object:
         # 随机划分数据集和测试集
         train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
 
-        user_groups = cifar_iid(train_dataset, 20)  # 存储每个分区的样本序号的set组成的dict
-        user_groups_test = cifar_iid(test_dataset, 20)  # 存储每个分区的样本序号的set组成的dict
+        user_groups = cifar_iid(train_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
+        user_groups_test = cifar_iid(test_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
 
         return train_dataset, test_dataset, user_groups, user_groups_test
 
@@ -144,8 +170,8 @@ def get_dataset(dataset_name: object) -> object:
         train_size = int(len(dataset) * 0.8)
         test_size = len(dataset) - train_size
         train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-        user_groups = cifar_iid(train_dataset, 20)  # 存储每个分区的样本序号的set组成的dict
-        user_groups_test = cifar_iid(test_dataset, 20)  # 存储每个分区的样本序号的set组成的dict
+        user_groups = cifar_iid(train_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
+        user_groups_test = cifar_iid(test_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
         return train_dataset, test_dataset, user_groups, user_groups_test
 
 class h5Data(Dataset):
@@ -437,7 +463,7 @@ def common_clustered(w):
 
     return w_out
 
-def local_train(net, dataset, idxs, device, lr):
+def local_train(client_id, net, dataset, idxs, device, lr):
 
     net.to(device)
     net.train()
@@ -447,15 +473,14 @@ def local_train(net, dataset, idxs, device, lr):
     # optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.5)
     ldr_train = DataLoader(DatasetSplit(dataset, list(idxs)), batch_size=64, shuffle=True)
     for iter in range(10):
+        # print("[client id:%d,epoch:%d] Local Training..." % (client_id, iter))
         for batch_idx, (images, labels) in enumerate(ldr_train):
             images, labels = images.to(device), labels.to(device)
-
-            net.zero_grad()
+            optimizer.zero_grad()  # 每次backward之前必须zero_grad()
             outputs = net(images)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-
     return net.state_dict()
 
 def test_inference(model, dataset, idxs, device):
@@ -463,26 +488,19 @@ def test_inference(model, dataset, idxs, device):
     """
     # model.eval()
     loss, total, correct = 0.0, 0.0, 0.0
-
     model.to(device)
-    model.train()
-
+    model.eval()
     ldr_test = DataLoader(DatasetSplit(dataset, list(idxs)), batch_size=64, shuffle=False)
-
     for _, (images, labels) in enumerate(ldr_test):
-        model.zero_grad()
+        # model.zero_grad()
         images, labels = images.to(device), labels.to(device)
-
         # Inference
         outputs = model(images)
-
+        total += len(labels)
         # Prediction
         _, pred_labels = torch.max(outputs, 1)
-
         pred_labels = pred_labels.view(-1)
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
-        total += len(labels)
-
     accuracy = correct * 1.0 / total
     return accuracy
 

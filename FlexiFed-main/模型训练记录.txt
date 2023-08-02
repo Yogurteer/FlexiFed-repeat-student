@@ -2,19 +2,19 @@
 training started:VGG cifar10 Max-Common epoch=502
 start time:2023-07-13 20:24:36
 预计13日22:10结束
-ending time:2023-07-25 22:11:35
+ending time:2023-07-13 22:11:35
 
 3080零号机 43779
 training started:VGG cifar10 Basic-Common epoch=502
 start time:2023-07-20 08:24:33
 预计20日10:30结束
-ending time:2023-07-25 10:20:44
+ending time:2023-07-20 10:20:44
 
 3080零号机 43779
 training started:VGG cifar10 Basic-Common epoch=502
 start time:2023-07-21 11:56:57
 预计21日14:00结束
-ending time:2023-07-25 13:50:24
+ending time:2023-07-21 13:50:24
 
 3080三号机 19448
 training started:VGG CINIC10 Basic-Common epoch=502
@@ -74,6 +74,4 @@ start time:2023-07-25 01:24:36
 预计25日5:10结束
 ending time:2023-07-25 04:49:35
 consuming time:12298.7s
-
-
 
