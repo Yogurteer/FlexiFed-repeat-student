@@ -1,3 +1,5 @@
+
+
 请阅读我们团队前不久刚发表的论文FlexiFed: Personalized Federated Learning for Edge Clients with Heterogeneous Model Architectures，尝试理解全文，实现实验部分FlexiFed的源代码，并复现Table 1中呈现的实验结果：
 
 第一阶段：实现FlexiFed中的三种策略，包括Basic-Common，Clustered-Common和Max-Common，复现在FlexiFed框架中用CIFAR-10数据集训练VGG模型获得的结果。

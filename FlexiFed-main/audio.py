@@ -51,8 +51,5 @@ for (i, data) in enumerate(train_loader):
     wav_data, wav_name = data
     if i==10:
         print(wav_name, wav_data, wav_data.shape)
-    # print("shape of wav data{}:{}".format(i, wav_data.shape))   # torch.Size([8, 8192])
-    # print(i, wav_name)
- # ('./p225\\p225_293.wav', './p225\\p225_156.wav', './p225\\p225_277.wav', './p225\\p225_210.wav',
- # './p225\\p225_126.wav', './p225\\p225_021.wav', './p225\\p225_257.wav', './p225\\p225_192.wav')
+
 

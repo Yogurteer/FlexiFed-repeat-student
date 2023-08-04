@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt  # 导入画图工具库
 """
 在下面编辑导入和导出目录,其他信息自动生成
 """
-dad_dir = "/root/autodl-tmp/0725zzp00rtx3080/0802-basic-cifar10-resnet-1-epoch501"
+dad_dir = "/root/autodl-tmp/0725zzp03rtx3080/results_all/0804-clustered-agnews-vdcnn-fake810-epoch100"
 sdir = dad_dir.split('/')
 totaldata = sdir[-1].split('-')
 nepoch = [''.join(list(g)) for k, g in groupby(totaldata[-1], key=lambda x: x.isdigit())]
@@ -32,13 +32,12 @@ data = eval(data)
 xlength = len(data[0])
 # 求取最终acc结果
 for i in range(0, 8, 2):
-    a = data[i][epochs-100:epochs]
-    b = data[i+1][epochs-100:epochs]
-    c = (mean(a)+mean(b))*100/2
+    a = data[i][epochs-10:epochs]
+    b = data[i+1][epochs-10:epochs]
+    meanacc = (mean(a)+mean(b))*100/2
     n = int((i+2)/2)
-    # print("model version{} final average mean_acc:{}".format(n, round(c, 1)))
-    d = max(data[i])*100
-    print("model version{} final average max_acc:{}".format(n, round(d,1)))
+    maxacc = max(data[i])*100
+    print("model version{} final average max_acc:{}".format(n, round(maxacc, 1)))
 x1 = range(xlength)
 """
 final acc 计算方法：对最后100次acc求均值
@@ -46,13 +45,16 @@ final acc 计算方法：对最后100次acc求均值
 plt.rcParams['font.size'] = 10  # 设置字体的大小为10
 plt.rcParams['axes.unicode_minus'] = False  # 显示正、负的问题
 colors = ['aquamarine', 'dodgerblue', 'pink', 'sandybrown', 'm', 'y', 'k', 'w']
-labels = ["VGG-11", "VGG-13", "VGG-16", "VGG-19"]
+labels = {'vgg': ["VGG-11", "VGG-13", "VGG-16", "VGG-19"],
+          'resnet': ["ResNet20", "ResNet32", "ResNet44", "ResNet56"],
+          'charcnn': ["CharCNN3", "CharCNN4", "CharCNN5", "CharCNN6"],
+          'vdcnn': ["VDCNN9", "VDCNN17", "VDCNN29", "VDCNN49"]}
 fsize = 8
 i = 0
 # 第一个子图
 ax1 = plt.subplot(221)
-ax1.plot(x1, data[0], color=colors[i], label=labels[i])
-ax1.set_title('{}11 {} {}'.format(model, strategy, dataname), fontsize=fsize,
+ax1.plot(x1, data[0], color=colors[i], label=labels[model][i])
+ax1.set_title('{} {} {}'.format(labels[model][0], strategy, dataname), fontsize=fsize,
               color='black')  # 为子图添加标题，fontproperties是设置标题的字体，fontsize是设置标题字体的大小，color是设置标题字体的颜色
 ax1.set_xlabel(xname)  # 为x轴添加标签
 ax1.set_ylabel('Accuracy')  # 为y轴添加标签
@@ -61,8 +63,8 @@ ax1.grid(True)  # 绘制网格
 i += 1
 # 第二个子图
 ax1 = plt.subplot(222)
-ax1.plot(x1, data[2], color=colors[i], label=labels[i])
-ax1.set_title('{}13 {} {}'.format(model, strategy, dataname), fontsize=fsize,
+ax1.plot(x1, data[2], color=colors[i], label=labels[model][i])
+ax1.set_title('{} {} {}'.format(labels[model][1], strategy, dataname), fontsize=fsize,
               color='black')  # 为子图添加标题，fontproperties是设置标题的字体，fontsize是设置标题字体的大小，color是设置标题字体的颜色
 ax1.set_xlabel(xname)  # 为x轴添加标签
 ax1.set_ylabel('Accuracy')  # 为y轴添加标签
@@ -71,8 +73,8 @@ ax1.grid(True)  # 绘制网格
 i += 1
 # 第三个子图
 ax1 = plt.subplot(223)
-ax1.plot(x1, data[4], color=colors[i], label=labels[i])
-ax1.set_title('{}16 {} {}'.format(model, strategy, dataname), fontsize=fsize,
+ax1.plot(x1, data[4], color=colors[i], label=labels[model][i])
+ax1.set_title('{} {} {}'.format(labels[model][2], strategy, dataname), fontsize=fsize,
               color='black')  # 为子图添加标题，fontproperties是设置标题的字体，fontsize是设置标题字体的大小，color是设置标题字体的颜色
 ax1.set_xlabel(xname)  # 为x轴添加标签
 ax1.set_ylabel('Accuracy')  # 为y轴添加标签
@@ -81,8 +83,8 @@ ax1.grid(True)  # 绘制网格
 i += 1
 # 第四个子图
 ax1 = plt.subplot(224)
-ax1.plot(x1, data[6], color=colors[i], label=labels[i])
-ax1.set_title('{}19 {} {}'.format(model, strategy, dataname), fontsize=fsize,
+ax1.plot(x1, data[6], color=colors[i], label=labels[model][i])
+ax1.set_title('{} {} {}'.format(labels[model][3], strategy, dataname), fontsize=fsize,
               color='black')  # 为子图添加标题，fontproperties是设置标题的字体，fontsize是设置标题字体的大小，color是设置标题字体的颜色
 ax1.set_xlabel(xname)  # 为x轴添加标签
 ax1.set_ylabel('Accuracy')  # 为y轴添加标签

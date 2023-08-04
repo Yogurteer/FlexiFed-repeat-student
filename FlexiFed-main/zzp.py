@@ -4,6 +4,7 @@ import h5py
 from torch.utils.data import DataLoader, Dataset
 import torch
 from torch import nn
+from deldataset import *
 import torch.nn.functional as F
 import copy
 from collections import defaultdict
@@ -17,299 +18,6 @@ import librosa
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 
-
-def cifar_iid(dataset, num_users):
-    """
-    主实验中默认使用iid划分方式，文章中写40个用户随机分配40个独立同分布的分区，种类打乱
-    Sample I.I.D. client data from CIFAR10 dataset
-    :param dataset:
-    :param num_users:
-    :return: dict of image index
-    """
-    num_items = int(len(dataset) / num_users)  # num_items表示每个client分得的样本个数
-    dict_users, all_idxs = {}, [i for i in range(len(dataset))]
-    for i in range(num_users):
-        dict_users[i] = set(np.random.choice(all_idxs, num_items,
-                                             replace=False))  # 从all_idxs中随机抽取num_items个元素,不可重复
-        all_idxs = list(set(all_idxs) - dict_users[i])
-    return dict_users
-
-
-def noniid(dataset, num_users):
-    """
-    Sample non-I.I.D client data from MNIST dataset
-    :param dataset:
-    :param num_users:
-    :return:
-    """
-    num_shards, num_imgs = 40, 1250
-    idx_shard = [i for i in range(num_shards)]
-    dict_users = {i: np.array([], dtype='int64') for i in range(num_users)}
-    idxs = np.arange(num_shards * num_imgs)
-    labels = dataset.targets
-    # sort labels
-    idxs_labels = np.vstack((idxs, labels))
-    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
-    idxs = idxs_labels[0, :]
-
-    # divide and assign
-    for i in range(num_users):
-        rand_set = set(np.random.choice(idx_shard, 2, replace=False))
-        idx_shard = list(set(idx_shard) - rand_set)
-        for rand in rand_set:
-            dict_users[i] = np.concatenate((dict_users[i], idxs[rand * num_imgs:(rand + 1) * num_imgs]), axis=0)
-    return dict_users
-
-
-def get_dataset(dataset_name: object, number_clients) -> object:
-    """
-    主实验中默认使用iid划分方式，文章中写40个用户随机分配40个独立同分布的分区，种类打乱
-    Sample I.I.D. client data from CIFAR10 dataset
-    :param dataset:
-    :param num_users:
-    :return: train,test,train groups,test groups
-
-    实现方法：
-    dict_users字典中的每一个元素是一个set集合,set不可以取重复元素
-    all_idxs初始化为0-样本总数的list
-    num_items表示每个分区中的样本个数
-    已知有num_users个分区
-    每次分区时,从当前的all_idxs中随机取num_items个数表示已加入的样本序号,序号不可重复
-    分区加入序号之后,all_idxs列表中删除当前分区中的num_items个元素,表示分完当前区后剩下的总样本
-    """
-    # if dataset_name == "cifar10":
-    #     # data_dir = '../data/cifar10'
-    #     data_dir = "/root/autodl-tmp"
-    #     print(data_dir)
-    #     train_transform = transforms.Compose([
-    #         transforms.RandomCrop(32, padding=4),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    #     ])
-    #
-    #     test_transform = transforms.Compose([
-    #         transforms.ToTensor(),
-    #         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    #     ])
-    #
-    #     # train_dataset = datasets.CIFAR10(data_dir, train=True, download=False, transform=train_transform)
-    #     train_dataset = datasets.CIFAR10(data_dir, train=True, download=False,
-    #                                      transform=train_transform)
-    #     test_dataset = datasets.CIFAR10(data_dir, train=False, download=False,
-    #                                     transform=test_transform)
-    #
-    #     user_groups = cifar_iid(train_dataset, number_clients)  # 用户个数20个
-    #     user_groups_test = cifar_iid(test_dataset, number_clients)
-    #
-    #     return train_dataset, test_dataset, user_groups, user_groups_test
-
-    if dataset_name == "cifar10":
-        path = "/root/autodl-tmp/CIFAR-10"
-        mean = (0.4914, 0.4822, 0.4465)
-        std = (0.2023, 0.1994, 0.2010)
-        data_transforms = {
-            'train': transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std),
-                # normalize:the param is the mean value and standard deviation of the three channel
-            ]),
-            'test': transforms.Compose([
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std),
-            ]),
-        }
-
-        train_dataset = datasets.CIFAR10(path + "/train", train=True, download=False,
-                                         transform=data_transforms['train'])
-        test_dataset = datasets.CIFAR10(path + "/test", train=False, download=False,
-                                        transform=data_transforms['test'])
-        user_groups = cifar_iid(train_dataset, number_clients)
-        user_groups_test = cifar_iid(test_dataset, number_clients)
-
-        return train_dataset, test_dataset, user_groups, user_groups_test
-    if dataset_name == "cinic10":
-        cinic_directory = '/root/CINIC-10'
-        cinic_mean = [0.47889522, 0.47227842, 0.43047404]
-        cinic_std = [0.24205776, 0.23828046, 0.25874835]
-        train_dataset = datasets.ImageFolder(cinic_directory + '/train',
-                                             transform=transforms.Compose([transforms.RandomCrop(32, padding=4),
-                                                                           transforms.RandomHorizontalFlip(),
-                                                                           transforms.ToTensor(),
-                                                                           transforms.Normalize(mean=cinic_mean,
-                                                                                                std=cinic_std)]))
-        test_dataset = datasets.ImageFolder(cinic_directory + '/test',
-                                            transform=transforms.Compose([transforms.ToTensor(),
-                                                                          transforms.Normalize(mean=cinic_mean,
-                                                                                               std=cinic_std)]))
-
-        user_groups = cifar_iid(train_dataset, 20)
-        user_groups_test = cifar_iid(test_dataset, 20)
-
-        return train_dataset, test_dataset, user_groups, user_groups_test
-
-    if dataset_name == "speech_commands":
-        speech_directory = "/root/autodl-tmp/speech_commands"
-        dataset = Aduio_DataLoader(speech_directory + '/train', sr=16000, dimension=16000)
-        # print(dataset.wav_list)
-        train_size = int(len(dataset) * 0.8)
-        test_size = len(dataset) - train_size
-        # 随机划分数据集和测试集
-        train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-
-        user_groups = cifar_iid(train_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
-        user_groups_test = cifar_iid(test_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
-
-        return train_dataset, test_dataset, user_groups, user_groups_test
-
-    if dataset_name == "new_speech": # 目标h5文件下存放有预处理过后的数据
-        speech_directory = "/root/autodl-tmp/{}".format("zzph5-1.h5")
-        dataset = h5Data(data_path=speech_directory)
-        train_size = int(len(dataset) * 0.8)
-        test_size = len(dataset) - train_size
-        train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
-        user_groups = cifar_iid(train_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
-        user_groups_test = cifar_iid(test_dataset, number_clients)  # 存储每个分区的样本序号的set组成的dict
-        return train_dataset, test_dataset, user_groups, user_groups_test
-
-class h5Data(Dataset):
-    def __init__(self, data_path):
-        self.data_path ="/root/autodl-tmp/0724zzp01rtx3080/test_useless/{}".format("zzph5-1.h5")
-        self.data_path =data_path
-        self.wb_list = None
-        self.label_list = None
-        a = None
-        b = None
-        with h5py.File(self.data_path, 'r') as h5f:
-            print("keys: ", h5f.keys())
-            a = copy.deepcopy(h5f['wavs'][:])
-            b = copy.deepcopy(h5f['labels'][:])
-        a = torch.tensor(a)
-        self.wb_list=copy.deepcopy(a)
-        b = torch.tensor(b)
-        self.label_list=copy.deepcopy(b)
-
-    def __len__(self):
-        return len(self.wb_list)
-
-    def __getitem__(self, index):
-        return self.wb_list[index], self.label_list[index]
-
-class Aduio_DataLoader(Dataset):
-    def __init__(self, data_folder, sr=16000, dimension=16000):  # 8281=91*91
-        self.data_folder = data_folder
-        self.sr = sr
-        self.dim = dimension
-        self.labellist = []
-        # 获取音频名列表
-        self.wav_list = []
-        for root, dirnames, filenames in os.walk(data_folder):
-            for filename in fnmatch.filter(filenames, "*.wav"):  # 实现列表特殊字符的过滤或筛选,返回符合匹配“.wav”字符列表
-                self.wav_list.append(os.path.join(root, filename))
-        print("len of wav list:{}\n{}".format(len(self.wav_list),self.wav_list[0]))
-
-    def __getitem__(self, item):
-        # 读取一个音频文件，返回每个音频数据
-        filename = self.wav_list[item]
-        # print("cur label:{}".format(filename))
-        # print(filename)
-        wb_wav, _ = librosa.load(filename, sr=self.sr)
-        # sr为采样率，通过KMplayer查看sampling rate，确认过speech commands为16000
-
-        # 取 帧
-        if len(wb_wav) > self.dim:  # self.dim=8281
-            # print("yes:len of wb_wav{}:{}".format(filename, len(wb_wav)))
-            max_audio_start = len(wb_wav) - self.dim
-            audio_start = np.random.randint(0, max_audio_start)
-            wb_wav = wb_wav[audio_start: audio_start + self.dim]
-        else:
-            wb_wav = np.pad(wb_wav, (0, self.dim - len(wb_wav)), "constant")
-
-        wav = np.array(wb_wav, dtype=float)
-        y = wav
-        # 帧长为2048个点，帧移为512个点，由librosa官方文档指定,默认n_mels=128,所以输出的第一维度一定为128
-        mel_spect = librosa.feature.melspectrogram(y=y, sr=16000, n_fft=2048, hop_length=512)
-        mel_spect = librosa.power_to_db(mel_spect)
-        mel_spect = torch.tensor(mel_spect,dtype=torch.float32)
-        mel_spect = mel_spect.unsqueeze(0)
-
-        #数据预处理，no.1 中心化
-        mean1 = -35.430775023935055
-        mel_spect = mel_spect.add((0 - mean1))
-        # no.2 normalize
-        mean2 = -0.35955178793979636
-        std2 = 19.740814100800822
-        mel_spect = mel_spect.add((0 - mean2))
-        mel_spect = mel_spect.div(std2)
-        # no.3 standardlize
-        min = -2.966360110260923
-        max = 3.859975074498963
-        mel_spect = mel_spect.add(0 - min)
-        mel_spect = mel_spect.div(max - min)
-        mel_spect = mel_spect.add(-0.5)
-        mel_spect = mel_spect.div(0.5)
-
-
-        # # print("type mel_spect", mel_spect.dtype)
-        # # mel_spect = torch.log(mel_spect)
-
-        label_d = filename
-        labels_d = label_d.split('/')
-        label = labels_d[-2]
-        # label = int(1)
-        label_dict = {
-            'bed': 0,
-            'bird': 1,
-            'cat': 2,
-            'dog': 3,
-            'down': 4,
-            'eight': 5,
-            'five': 6,
-            'four': 7,
-            'go': 8,
-            'happy': 9,
-            'house': 10,
-            'left': 11,
-            'marvin': 12,
-            'nine': 13,
-            'no': 14,
-            'off': 15,
-            'on': 16,
-            'one': 17,
-            'right': 18,
-            'seven': 19,
-            'sheila': 20,
-            'six': 21,
-            'stop': 22,
-            'three': 23,
-            'tree': 24,
-            'two': 25,
-            'up': 26,
-            'wow': 27,
-            'yes': 28,
-            'zero': 29,
-        }
-        numlabel = label_dict[label]
-        return mel_spect, numlabel
-
-    def __len__(self):
-        # 音频文件的总数
-        return len(self.wav_list)
-
-class DatasetSplit(Dataset):  # DatasetSplit 类继承自父类 Dataset,按照idxs顺序有序排列
-    def __init__(self, dataset, idxs):
-        self.dataset = dataset
-        self.idxs = list(idxs)
-
-    def __len__(self):
-        return len(self.idxs)
-
-    def __getitem__(self, item):
-        image, label = self.dataset[self.idxs[item]]
-        # image = self.dataset[self.idxs[item]]
-        return image, label
 
 def common_basic(w):
     """
@@ -356,6 +64,7 @@ def common_basic(w):
             w[i][k] = comWeight
     return w
 
+
 def common_max(w):
     w_copy = copy.deepcopy(w)
     count = [[] for i in range(len(w))]
@@ -364,16 +73,18 @@ def common_max(w):
         count[i] = [1 for m in range(len(local_weights_names))]
 
     for i in range(0, len(w)):
-
         local_weights_names1 = [s for s in w[i].keys()]
-
         for j in range(i + 1, len(w)):
             if i == j:
                 continue
             local_weights_names2 = [s for s in w[j].keys()]
             for k in range(0, len(local_weights_names1)):
-                if local_weights_names2[k] == local_weights_names1[k]:
-                    name = local_weights_names1[k]
+                name = local_weights_names1[k]
+                # 遇到全连接层直接跳过
+                if "fc" in name:
+                    # print("fc current，skip,i:{} j:{}".format(i, j))
+                    break
+                elif local_weights_names2[k] == local_weights_names1[k]:
                     w[i][name] += w_copy[j][name]
                     w[j][name] += w_copy[i][name]
                     count[i][k] += 1
@@ -385,8 +96,8 @@ def common_max(w):
         local_weights_names = [s for s in w[c].keys()]
         for k in range(0, len(local_weights_names)):
             w[c][local_weights_names[k]] = w[c][local_weights_names[k]].cpu() / count[c][k]
-
     return w
+
 
 def compare(w1, w2):
     if len(w1) != len(w2):
@@ -401,14 +112,19 @@ def compare(w1, w2):
             return False
     return True
 
+
 def FedAvg(w):
     w_avg = copy.deepcopy(w[0])
     for k in w_avg.keys():
-        # print("len of w", len(w))
+        # 不聚合全连接层
+        if "fc" in k:
+            # print("fc current,skip")
+            break
         for i in range(1, len(w)):
             w_avg[k] += w[i][k]
         w_avg[k] = torch.div(w_avg[k], len(w))
     return w_avg
+
 
 def common_clustered(w):
     """
@@ -463,25 +179,38 @@ def common_clustered(w):
 
     return w_out
 
-def local_train(client_id, net, dataset, idxs, device, lr):
 
+def adjust_learning_rate(optimizer, epoch, start_lr):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = start_lr * (0.1 ** (epoch // 3))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+
+
+def local_train(client_id, net, dataset, idxs, device, lr, epoch, local_loss):
     net.to(device)
     net.train()
     # train and update
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
-    # optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.5)
-    ldr_train = DataLoader(DatasetSplit(dataset, list(idxs)), batch_size=64, shuffle=True)
-    for iter in range(10):
+    # adjust_learning_rate(optimizer, epoch, lr)
+    ldr_train = DataLoader(DatasetSplit(dataset, list(idxs)), batch_size=64, shuffle=False)
+    # 打印当前lr
+    # print("Client:{} Epoch:{}  Lr:{:.2E}"
+    # .format(client_id, epoch, optimizer.state_dict()['param_groups'][0]['lr']))
+    for iter_t in range(10):
         # print("[client id:%d,epoch:%d] Local Training..." % (client_id, iter))
         for batch_idx, (images, labels) in enumerate(ldr_train):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()  # 每次backward之前必须zero_grad()
             outputs = net(images)
             loss = criterion(outputs, labels)
+            if iter_t==9 and batch_idx==0:
+                local_loss[client_id].append(round(loss.item(), 6))
             loss.backward()
             optimizer.step()
     return net.state_dict()
+
 
 def test_inference(model, dataset, idxs, device):
     """ Returns the test accuracy and loss.
@@ -503,6 +232,7 @@ def test_inference(model, dataset, idxs, device):
         correct += torch.sum(torch.eq(pred_labels, labels)).item()
     accuracy = correct * 1.0 / total
     return accuracy
+
 
 def utils():
     return None
