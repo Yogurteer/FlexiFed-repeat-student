@@ -38,8 +38,7 @@ Model Architectures"中Table1部分的实验结果
 - Basic-Common
 - Clustered-Common
 - Max-Common
-<span id="jump">跳转到的地方</span>
-## 实验运行方式
+## 实验运行方式<span id="jump"></span>
 参考仓库目录结构如下图,按步骤运行:
 - 根据requirements.txt下载所需模块
 - 下载所需数据集到本地
@@ -48,33 +47,36 @@ Model Architectures"中Table1部分的实验结果
 - 将运行目录作为输入运行view_results/drawer.py,得到acc曲线图像
 - 可以在三种策略均训练完成之后运行drawer_compare.py比较不同方法之间的效果差异
 ### 目录结构
-FlexiFed-repeat-student<br />
-│  README.md<br />
-│  目录结构.txt<br />
+FlexiFed-repeat-student</br>
+│  README.md</br>
+│  目录结构.txt</br>
 │          
-├─FlexiFed-main<br />
-│  │  fed-main.py<br />
-│  │  requirements.txt<br />
-│  │  utils.py<br />
-│  │  任务说明.txt<br />
+├─FlexiFed-main</br>
+│  │  fed-main.py</br>
+│  │  requirements.txt</br>
+│  │  utils.py</br>
+│  │  任务说明.txt</br>
 │  │  
-│  ├─datasets<br />
-│  │      deldataset.py<br />
+│  ├─datasets</br>
+│  │      deldataset.py</br>
 │  │      
-│  ├─model_family<br />
-│  │      CharCNN.py<br />
-│  │      ResNet.py<br />
-│  │      VDCNN.py<br />
-│  │      vgg.py<br />
+│  ├─model_family</br>
+│  │      CharCNN.py</br>
+│  │      ResNet.py</br>
+│  │      VDCNN.py</br>
+│  │      vgg.py</br>
 │  │      
-│  └─view_results<br />
-│          drawer.py<br />
-│          drawer_compare.py<br />
-│          view_model.py<br />
+│  └─view_results</br>
+│          drawer.py</br>
+│          drawer_compare.py</br>
+│          view_model.py</br>
 │          
-└─数据&报告<br />
-&emsp; FlexiFed 实验复现结果数据汇总.xlsx<br />
-&emsp; 实验结果曲线图汇总-8.1.pdf<br />
-&emsp; 生产实习汇报小结-7.3-7.13-周臻鹏.pdf<br />
-&emsp; 生产实习汇报小结-第二、三周-周臻鹏.pdf<br />
-&emsp; 第三周实验复现结果曲线图汇总-共12项.pdf<br />
+└─数据&报告</br>
+&emsp;FlexiFed 实验复现结果数据汇总.xlsx</br>
+&emsp;FlexiFed 实验复现结果曲线图汇总.pdf</br>
+&emsp;实验结果曲线图汇总-8.1.pdf</br>
+&emsp;生产实习汇报小结-7.3-7.13-周臻鹏.pdf</br>
+&emsp;生产实习汇报小结-第二、三周-周臻鹏.pdf</br>
+&emsp;生产实习汇报小结-第四周&总结-周臻鹏.docx</br>
+&emsp;生产实习汇报小结-第四周&总结-周臻鹏.pdf</br>
+&emsp;第三周实验复现结果曲线图汇总-共12项.pdf</br>
