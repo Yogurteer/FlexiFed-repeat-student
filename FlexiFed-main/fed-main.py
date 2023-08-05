@@ -2,18 +2,12 @@
 # -*- coding: utf-8 -*-
 # coding=utf-8
 # Python version: 3.8
-import copy
-import pickle
 from itertools import groupby
-import numpy as np
-import torch
-import time
-from deldataset import *
-from zzp import *
-from vgg import *
-from ResNet import *
-from CharCNN import *
-from VDCNN import *
+from utils import *
+from model_family.vgg import *
+from model_family.ResNet import *
+from model_family.CharCNN import *
+from model_family.VDCNN import *
 from torch.utils.tensorboard import SummaryWriter
 import warnings
 import os
