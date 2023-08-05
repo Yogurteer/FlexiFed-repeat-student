@@ -11,7 +11,7 @@ for Edge Clients with Heterogeneous
 Model Architectures"中Table1部分的实验结果
 ## 配置
 ### 硬件环境
-- GPU RTX 4090 10G
+- GPU RTX 3080 10G
 - CPU 12核
 - 40G内存
 ### 软件环境
